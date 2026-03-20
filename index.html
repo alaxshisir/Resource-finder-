@@ -3,165 +3,115 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Ultimate Resource Finder - Final Fix</title>
+    <title>UR Finder - No API Mode</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700" rel="stylesheet"/>
     <style>
         body { background-color: #080808; color: #e5e2e1; font-family: 'Hind Siliguri', sans-serif; }
-        .active-tab { background-color: #39ff14 !important; color: black !important; box-shadow: 0 0 15px rgba(57, 255, 20, 0.3); }
-        .card { background: #121212; border: 1px solid #1a1a1a; transition: 0.3s; }
-        .card:hover { border-color: #39ff14; }
-        #videoOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 100; align-items: center; justify-content: center; padding: 15px; }
-        .loader { border-top-color: #39ff14; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .active-tab { background-color: #39ff14 !important; color: black !important; }
+        .search-container { background: #121212; border: 2px solid #1a1a1a; transition: 0.3s; }
+        .search-container:focus-within { border-color: #39ff14; }
+        iframe { width: 100%; height: 500px; border-radius: 1.5rem; border: 1px solid #222; }
+        .hidden { display: none; }
     </style>
 </head>
-<body class="p-4">
+<body class="p-4 md:p-8">
 
-    <div class="max-w-xl mx-auto min-h-screen">
-        <header class="text-center my-8">
-            <h1 class="text-3xl font-black tracking-tighter text-[#39ff14]">UR Finder</h1>
-            <p class="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Academic Resources & Food Yard</p>
+    <div class="max-w-3xl mx-auto">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-black text-[#39ff14] tracking-tighter">UR Finder</h1>
+            <p class="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Academic Resources Hub</p>
         </header>
 
-        <div class="flex bg-zinc-900/50 p-1.5 rounded-2xl mb-8 gap-1">
-            <button id="pdfTab" onclick="switchMode('pdf')" class="flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 active-tab transition-all">
-                <span class="material-symbols-outlined text-lg">description</span> বই পিডিএফ
+        <div class="flex bg-zinc-900/50 p-1.5 rounded-2xl mb-8 gap-2">
+            <button id="pdfTab" onclick="switchMode('pdf')" class="flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 active-tab">
+                <span class="material-symbols-outlined">description</span> বই পিডিএফ
             </button>
-            <button id="videoTab" onclick="switchMode('video')" class="flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 text-gray-500 transition-all">
-                <span class="material-symbols-outlined text-lg">smart_display</span> ভিডিও ক্লাস
+            <button id="videoTab" onclick="switchMode('video')" class="flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 text-gray-500">
+                <span class="material-symbols-outlined">smart_display</span> ভিডিও ক্লাস
             </button>
         </div>
 
-        <div class="relative mb-10">
-            <input id="searchInput" type="search" placeholder="টপিক লিখে সার্চ দিন..." 
-                   class="w-full bg-[#121212] border-2 border-zinc-800 rounded-2xl py-5 pl-14 pr-32 focus:border-[#39ff14] focus:ring-0 text-lg outline-none">
+        <div class="search-container relative rounded-2xl mb-10 overflow-hidden">
+            <input id="searchInput" type="text" placeholder="বই বা টপিক লিখে সার্চ দিন..." 
+                   class="w-full bg-transparent border-none py-5 pl-14 pr-32 focus:ring-0 text-lg outline-none">
             <span class="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-gray-500">search</span>
-            <button onclick="handleSearch()" class="absolute right-3 top-2.5 bottom-2.5 bg-[#39ff14] text-black px-6 rounded-xl font-black text-sm uppercase active:scale-95 transition-all">খুঁজুন</button>
+            <button onclick="executeSearch()" class="absolute right-2 top-2 bottom-2 bg-[#39ff14] text-black px-6 rounded-xl font-black text-sm uppercase">খুঁজুন</button>
         </div>
 
-        <div id="status" class="text-center py-20">
-            <div id="spinner" class="loader w-10 h-10 border-4 border-white/5 rounded-full mx-auto mb-4 hidden"></div>
-            <div id="placeholder">
-                <span class="material-symbols-outlined text-6xl text-zinc-800 mb-4">search_insights</span>
-                <p class="text-zinc-600 font-bold">আপনি কি খুঁজছেন?</p>
+        <div id="resultsArea" class="space-y-6">
+            <div id="pdfResults" class="grid gap-4"></div>
+
+            <div id="videoContainer" class="hidden">
+                <p class="text-xs text-[#39ff14] font-bold mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-sm">info</span> ইউটিউব থেকে সরাসরি লোড হচ্ছে...
+                </p>
+                <div class="rounded-3xl overflow-hidden border border-white/5 shadow-2xl">
+                    <iframe id="videoIframe" src="" allowfullscreen></iframe>
+                </div>
             </div>
         </div>
-
-        <div id="resultsGrid" class="grid gap-4 mb-32"></div>
-    </div>
-
-    <div id="videoOverlay">
-        <div class="w-full max-w-4xl">
-            <div class="flex justify-between items-center mb-4">
-                <h3 id="playingTitle" class="text-[#39ff14] font-bold truncate pr-4">Video Playing...</h3>
-                <button onclick="closeVideo()" class="bg-red-600 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 shadow-lg">
-                    <span class="material-symbols-outlined">close</span> বন্ধ করুন
-                </button>
-            </div>
-            <div class="relative pt-[56.25%] bg-black rounded-3xl overflow-hidden shadow-2xl border border-white/10">
-                <iframe id="ytPlayer" class="absolute inset-0 w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            </div>
+        
+        <div id="welcomeMessage" class="text-center py-20 opacity-20">
+            <span class="material-symbols-outlined text-7xl">auto_stories</span>
+            <p class="font-bold mt-2">সার্চ দিয়ে শুরু করুন</p>
         </div>
     </div>
 
     <script>
-        let mode = 'pdf';
+        let currentMode = 'pdf';
 
-        function switchMode(newMode) {
-            mode = newMode;
+        function switchMode(mode) {
+            currentMode = mode;
             document.getElementById('pdfTab').className = `flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${mode === 'pdf' ? 'active-tab' : 'text-gray-500'}`;
             document.getElementById('videoTab').className = `flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${mode === 'video' ? 'active-tab' : 'text-gray-500'}`;
-            document.getElementById('resultsGrid').innerHTML = "";
-            document.getElementById('status').classList.remove('hidden');
-            document.getElementById('placeholder').classList.remove('hidden');
+            document.getElementById('searchInput').placeholder = mode === 'pdf' ? "বইয়ের নাম বা টপিক লিখুন..." : "ভিডিও ক্লাস খুঁজুন...";
+            
+            // ক্লিনিং
+            document.getElementById('pdfResults').innerHTML = "";
+            document.getElementById('videoContainer').classList.add('hidden');
+            document.getElementById('welcomeMessage').classList.remove('hidden');
         }
 
-        async function handleSearch() {
+        async function executeSearch() {
             const query = document.getElementById('searchInput').value;
             if (!query) return;
 
-            const grid = document.getElementById('resultsGrid');
-            const spinner = document.getElementById('spinner');
-            const placeholder = document.getElementById('placeholder');
+            document.getElementById('welcomeMessage').classList.add('hidden');
 
-            grid.innerHTML = "";
-            placeholder.classList.add('hidden');
-            spinner.classList.remove('hidden');
-
-            try {
-                if (mode === 'pdf') {
-                    const res = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=10`);
-                    const data = await res.json();
-                    renderItems(data.docs.map(b => ({
-                        title: b.title,
-                        sub: b.author_name ? b.author_name[0] : 'Free Academy',
-                        link: `https://www.google.com/search?q=${encodeURIComponent(b.title + " filetype:pdf")}`,
-                        label: 'Download PDF',
-                        icon: 'description',
-                        isVideo: false
-                    })));
-                } else {
-                    // ডামি আইডি বদলে এখন রিয়েল টাইম ইউটিউব লিঙ্ক জেনারেশন ট্রিক
-                    // আমরা জনপ্রিয় এডুকেশন চ্যানেল থেকে নির্দিষ্ট কিছু কমন আইডি দিচ্ছি যা প্লে হবে
-                    const videos = [
-                        { title: `${query} | বিস্তারিত ক্লাস`, sub: 'Lecture 01', id: 'O6v_N9S88-M' },
-                        { title: `${query} | শর্ট টেকনিক`, sub: 'Special Class', id: '3vK9o7uCiwI' },
-                        { title: `${query} | প্রশ্ন সমাধান`, sub: 'Advanced', id: 'fA2_3n8mGZ0' },
-                        { title: `${query} | রিভিশন ক্লাস`, sub: 'Quick Fix', id: 'dQw4w9WgXcQ' }
-                    ];
-                    renderItems(videos.map(v => ({
-                        title: v.title,
-                        sub: v.sub,
-                        id: v.id,
-                        label: 'Play Video',
-                        icon: 'play_circle',
-                        isVideo: true
-                    })));
-                }
-            } catch (err) {
-                console.error(err);
-            } finally {
-                spinner.classList.add('hidden');
+            if (currentMode === 'pdf') {
+                document.getElementById('videoContainer').classList.add('hidden');
+                document.getElementById('pdfResults').innerHTML = "<p class='text-center py-10'>বই খোঁজা হচ্ছে...</p>";
+                await fetchPDFs(query);
+            } else {
+                document.getElementById('pdfResults').innerHTML = "";
+                document.getElementById('videoContainer').classList.remove('hidden');
+                // এপিআই ছাড়া ইউটিউব সার্চ রেজাল্ট এমবেড করার স্মার্ট ট্রিক
+                const ytSearchUrl = `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query + " class bangla")}`;
+                document.getElementById('videoIframe').src = ytSearchUrl;
             }
         }
 
-        function renderItems(items) {
-            const grid = document.getElementById('resultsGrid');
-            document.getElementById('status').classList.add('hidden');
-
-            items.forEach(item => {
-                const action = item.isVideo ? `onclick="playVideo('${item.id}', '${item.title.replace(/'/g, "\\'")}')"` : `href="${item.link}" target="_blank"`;
-                grid.innerHTML += `
-                    <div class="card p-5 rounded-2xl flex items-center justify-between">
-                        <div class="flex items-center gap-4 overflow-hidden">
-                            <span class="material-symbols-outlined text-[#39ff14] text-3xl shrink-0">${item.icon}</span>
-                            <div class="truncate">
-                                <h4 class="font-bold text-sm truncate">${item.title}</h4>
-                                <p class="text-[10px] text-zinc-500 uppercase font-bold">${item.sub}</p>
+        async function fetchPDFs(q) {
+            try {
+                const res = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=8`);
+                const data = await res.json();
+                const grid = document.getElementById('pdfResults');
+                grid.innerHTML = "";
+                
+                data.docs.forEach(b => {
+                    const downloadLink = `https://www.google.com/search?q=${encodeURIComponent(b.title + " filetype:pdf")}`;
+                    grid.innerHTML += `
+                        <div class="bg-zinc-900/50 p-5 rounded-2xl border border-white/5 flex items-center justify-between">
+                            <div class="truncate pr-4">
+                                <h4 class="font-bold text-sm truncate">${b.title}</h4>
+                                <p class="text-[10px] text-zinc-500 uppercase font-bold">${b.author_name ? b.author_name[0] : 'Free'}</p>
                             </div>
-                        </div>
-                        <${item.isVideo ? 'button' : 'a'} ${action} class="bg-[#39ff14] text-black px-4 py-2 rounded-lg text-[10px] font-black uppercase whitespace-nowrap ml-4">
-                            ${item.label}
-                        </${item.isVideo ? 'button' : 'a'}>
-                    </div>
-                `;
-            });
-        }
-
-        function playVideo(id, title) {
-            const player = document.getElementById('ytPlayer');
-            // 'https://www.youtube.com/embed/' ই হলো সঠিক পদ্ধতি
-            player.src = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0`;
-            document.getElementById('playingTitle').innerText = title;
-            document.getElementById('videoOverlay').style.display = 'flex';
-        }
-
-        function closeVideo() {
-            const player = document.getElementById('ytPlayer');
-            player.src = "";
-            document.getElementById('videoOverlay').style.display = 'none';
+                            <a href="${downloadLink}" target="_blank" class="bg-[#39ff14] text-black px-4 py-2 rounded-lg text-[10px] font-black uppercase whitespace-nowrap">Download</a>
+                        </div>`;
+                });
+            } catch (e) { alert("Error loading PDFs"); }
         }
     </script>
 </body>
