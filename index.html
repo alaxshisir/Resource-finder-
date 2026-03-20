@@ -3,16 +3,15 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>UR Finder - No API Mode</title>
+    <title>UR Finder - Real Search</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700" rel="stylesheet"/>
     <style>
         body { background-color: #080808; color: #e5e2e1; font-family: 'Hind Siliguri', sans-serif; }
-        .active-tab { background-color: #39ff14 !important; color: black !important; }
-        .search-container { background: #121212; border: 2px solid #1a1a1a; transition: 0.3s; }
-        .search-container:focus-within { border-color: #39ff14; }
-        iframe { width: 100%; height: 500px; border-radius: 1.5rem; border: 1px solid #222; }
+        .active-tab { background-color: #39ff14 !important; color: black !important; box-shadow: 0 0 15px rgba(57, 255, 20, 0.4); }
+        .search-btn { background-color: #39ff14; color: black; transition: 0.3s; font-weight: 900; }
+        iframe { width: 100%; height: 550px; border-radius: 1.5rem; border: 1px solid #333; }
         .hidden { display: none; }
     </style>
 </head>
@@ -21,41 +20,41 @@
     <div class="max-w-3xl mx-auto">
         <header class="text-center mb-8">
             <h1 class="text-3xl font-black text-[#39ff14] tracking-tighter">UR Finder</h1>
-            <p class="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Academic Resources Hub</p>
+            <p class="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Academic & Entertainment Hub</p>
         </header>
 
         <div class="flex bg-zinc-900/50 p-1.5 rounded-2xl mb-8 gap-2">
-            <button id="pdfTab" onclick="switchMode('pdf')" class="flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 active-tab">
+            <button id="pdfTab" onclick="switchMode('pdf')" class="flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 active-tab transition-all">
                 <span class="material-symbols-outlined">description</span> বই পিডিএফ
             </button>
-            <button id="videoTab" onclick="switchMode('video')" class="flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 text-gray-500">
+            <button id="videoTab" onclick="switchMode('video')" class="flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 text-gray-500 transition-all">
                 <span class="material-symbols-outlined">smart_display</span> ভিডিও ক্লাস
             </button>
         </div>
 
-        <div class="search-container relative rounded-2xl mb-10 overflow-hidden">
+        <div class="relative bg-zinc-900 rounded-2xl mb-10 border-2 border-zinc-800 focus-within:border-[#39ff14] transition-all overflow-hidden">
             <input id="searchInput" type="text" placeholder="বই বা টপিক লিখে সার্চ দিন..." 
-                   class="w-full bg-transparent border-none py-5 pl-14 pr-32 focus:ring-0 text-lg outline-none">
+                   class="w-full bg-transparent py-5 pl-14 pr-32 focus:ring-0 text-lg outline-none">
             <span class="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-gray-500">search</span>
-            <button onclick="executeSearch()" class="absolute right-2 top-2 bottom-2 bg-[#39ff14] text-black px-6 rounded-xl font-black text-sm uppercase">খুঁজুন</button>
+            <button onclick="performSearch()" class="search-btn absolute right-2 top-2 bottom-2 px-6 rounded-xl text-sm uppercase">খুঁজুন</button>
         </div>
 
-        <div id="resultsArea" class="space-y-6">
-            <div id="pdfResults" class="grid gap-4"></div>
+        <div id="resultsContainer">
+            <div id="welcome" class="text-center py-20 opacity-20">
+                <span class="material-symbols-outlined text-7xl">explore</span>
+                <p class="font-bold mt-2">আপনার সার্চের জন্য প্রস্তুত!</p>
+            </div>
 
-            <div id="videoContainer" class="hidden">
-                <p class="text-xs text-[#39ff14] font-bold mb-4 flex items-center gap-2">
-                    <span class="material-symbols-outlined text-sm">info</span> ইউটিউব থেকে সরাসরি লোড হচ্ছে...
+            <div id="videoView" class="hidden">
+                <p class="text-[10px] text-[#39ff14] font-black uppercase mb-3 tracking-widest flex items-center gap-2">
+                    <span class="animate-pulse w-2 h-2 bg-[#39ff14] rounded-full"></span> সরাসরি ইউটিউব থেকে লোড হচ্ছে...
                 </p>
-                <div class="rounded-3xl overflow-hidden border border-white/5 shadow-2xl">
-                    <iframe id="videoIframe" src="" allowfullscreen></iframe>
+                <div class="shadow-2xl shadow-[#39ff14]/5">
+                    <iframe id="ytIframe" src="" allowfullscreen></iframe>
                 </div>
             </div>
-        </div>
-        
-        <div id="welcomeMessage" class="text-center py-20 opacity-20">
-            <span class="material-symbols-outlined text-7xl">auto_stories</span>
-            <p class="font-bold mt-2">সার্চ দিয়ে শুরু করুন</p>
+
+            <div id="pdfView" class="grid gap-4 hidden"></div>
         </div>
     </div>
 
@@ -66,52 +65,63 @@
             currentMode = mode;
             document.getElementById('pdfTab').className = `flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${mode === 'pdf' ? 'active-tab' : 'text-gray-500'}`;
             document.getElementById('videoTab').className = `flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${mode === 'video' ? 'active-tab' : 'text-gray-500'}`;
-            document.getElementById('searchInput').placeholder = mode === 'pdf' ? "বইয়ের নাম বা টপিক লিখুন..." : "ভিডিও ক্লাস খুঁজুন...";
+            document.getElementById('searchInput').placeholder = mode === 'pdf' ? "বইয়ের নাম লিখে সার্চ দিন..." : "ভিডিও টপিক লিখে সার্চ দিন...";
             
-            // ক্লিনিং
-            document.getElementById('pdfResults').innerHTML = "";
-            document.getElementById('videoContainer').classList.add('hidden');
-            document.getElementById('welcomeMessage').classList.remove('hidden');
+            // Clear current view
+            document.getElementById('pdfView').classList.add('hidden');
+            document.getElementById('videoView').classList.add('hidden');
+            document.getElementById('welcome').classList.remove('hidden');
         }
 
-        async function executeSearch() {
+        async function performSearch() {
             const query = document.getElementById('searchInput').value;
             if (!query) return;
 
-            document.getElementById('welcomeMessage').classList.add('hidden');
+            document.getElementById('welcome').classList.add('hidden');
 
-            if (currentMode === 'pdf') {
-                document.getElementById('videoContainer').classList.add('hidden');
-                document.getElementById('pdfResults').innerHTML = "<p class='text-center py-10'>বই খোঁজা হচ্ছে...</p>";
-                await fetchPDFs(query);
+            if (currentMode === 'video') {
+                document.getElementById('pdfView').classList.add('hidden');
+                document.getElementById('videoView').classList.remove('hidden');
+                
+                // Real-time Search Hack (Without API Key)
+                // এটি ইউটিউবের সার্চ রেজাল্টকে সরাসরি একটি প্লেবল লিস্ট হিসেবে আপনার আইফ্রেমের ভেতরে নিয়ে আসবে
+                const searchUrl = `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query + " class bangla")}`;
+                document.getElementById('ytIframe').src = searchUrl;
+
             } else {
-                document.getElementById('pdfResults').innerHTML = "";
-                document.getElementById('videoContainer').classList.remove('hidden');
-                // এপিআই ছাড়া ইউটিউব সার্চ রেজাল্ট এমবেড করার স্মার্ট ট্রিক
-                const ytSearchUrl = `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query + " class bangla")}`;
-                document.getElementById('videoIframe').src = ytSearchUrl;
+                document.getElementById('videoView').classList.add('hidden');
+                document.getElementById('pdfView').classList.remove('hidden');
+                document.getElementById('pdfView').innerHTML = "<p class='text-center py-10 opacity-50 animate-pulse'>বই খোঁজা হচ্ছে...</p>";
+                await fetchBooks(query);
             }
         }
 
-        async function fetchPDFs(q) {
+        async function fetchBooks(q) {
             try {
-                const res = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=8`);
+                const res = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=10`);
                 const data = await res.json();
-                const grid = document.getElementById('pdfResults');
-                grid.innerHTML = "";
-                
-                data.docs.forEach(b => {
-                    const downloadLink = `https://www.google.com/search?q=${encodeURIComponent(b.title + " filetype:pdf")}`;
-                    grid.innerHTML += `
-                        <div class="bg-zinc-900/50 p-5 rounded-2xl border border-white/5 flex items-center justify-between">
+                const container = document.getElementById('pdfView');
+                container.innerHTML = "";
+
+                if(data.docs.length === 0) {
+                    container.innerHTML = "<p class='text-center py-10'>দুঃখিত, কোনো বই পাওয়া যায়নি!</p>";
+                    return;
+                }
+
+                data.docs.forEach(book => {
+                    const searchLink = `https://www.google.com/search?q=${encodeURIComponent(book.title + " filetype:pdf")}`;
+                    container.innerHTML += `
+                        <div class="bg-zinc-900/80 p-5 rounded-2xl border border-white/5 flex items-center justify-between group hover:border-[#39ff14] transition-all">
                             <div class="truncate pr-4">
-                                <h4 class="font-bold text-sm truncate">${b.title}</h4>
-                                <p class="text-[10px] text-zinc-500 uppercase font-bold">${b.author_name ? b.author_name[0] : 'Free'}</p>
+                                <h4 class="font-bold text-sm truncate group-hover:text-[#39ff14] transition-colors">${book.title}</h4>
+                                <p class="text-[10px] text-zinc-500 font-bold mt-1">${book.author_name ? book.author_name[0] : 'Free Academy'}</p>
                             </div>
-                            <a href="${downloadLink}" target="_blank" class="bg-[#39ff14] text-black px-4 py-2 rounded-lg text-[10px] font-black uppercase whitespace-nowrap">Download</a>
+                            <a href="${searchLink}" target="_blank" class="bg-[#39ff14]/10 text-[#39ff14] border border-[#39ff14]/30 px-5 py-2 rounded-xl text-[10px] font-black uppercase hover:bg-[#39ff14] hover:text-black transition-all shadow-lg shadow-[#39ff14]/5">Download</a>
                         </div>`;
                 });
-            } catch (e) { alert("Error loading PDFs"); }
+            } catch (e) {
+                document.getElementById('pdfView').innerHTML = "Error loading data.";
+            }
         }
     </script>
 </body>
